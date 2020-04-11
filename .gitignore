@@ -144,3 +144,5 @@ static
 
 # Sukhy's ignore list
 *.http
+.vscode/*
+.cache*
