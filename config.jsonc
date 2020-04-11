@@ -1,0 +1,9 @@
+{
+    "ARTIST_THRESHOLD": 0.5, //Percentage of your top artists to consider. .5 will only get latest songs of the top 50% of your most heard artists in the playlist.
+    "PLAYLIST_URI": "spotify:playlist:someid", //The playlist you are trying to build from
+    "USERNAME": "username", //User's username
+    "DAYS_LIMIT": 31, //How latest you want the songs to be from
+    "GENERATED_PLAYLIST_NAME": "🌊 New Wave", //The generated playlist's name
+    "GENERATED_PLAYLIST_IS_PUBLIC": true, //Whether the generated playlist is public or private
+    "GENERATED_PLAYLIST_DESCRIPTION": "This playlist was created by code. It has latest songs from your top artists." //Description for the generated playlist
+}
