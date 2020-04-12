@@ -5,6 +5,7 @@ from datetime import datetime
 from dateutil.parser import parse
 import json
 from jsmin import jsmin
+import random
 import spotipy
 
 env = Env()
@@ -20,6 +21,11 @@ ARTIST_THRESHOLD = configs['ARTIST_THRESHOLD']
 PLAYLIST_URI = configs['PLAYLIST_URI']
 USERNAME = configs['USERNAME']
 DAYS_LIMIT = configs['DAYS_LIMIT']
+CONSIDER_WILDCARD_ARTIST_THRESHOLD = configs['CONSIDER_WILDCARD_ARTIST_THRESHOLD']
+DISCOVER_RELATED_ARTIST_THRESHOLD = configs['DISCOVER_RELATED_ARTIST_THRESHOLD']
+DISCOVER_RELATED_ARTIST_ONLY_POPULAR = configs['DISCOVER_RELATED_ARTIST_ONLY_POPULAR']
+DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD = configs[
+    'DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD']
 GENERATED_PLAYLIST_NAME = configs['GENERATED_PLAYLIST_NAME']
 GENERATED_PLAYLIST_IS_PUBLIC = configs['GENERATED_PLAYLIST_IS_PUBLIC']
 GENERATED_PLAYLIST_DESCRIPTION = configs['GENERATED_PLAYLIST_DESCRIPTION']
@@ -55,8 +61,57 @@ my_playlist_artists_ordered = OrderedDict(
     sorted(my_playlist_artists.items(), key=lambda t: t[1]['count'], reverse=True))
 
 artist_lookup_limit = int(len(my_playlist_artists_ordered) * ARTIST_THRESHOLD)
+wildcard_lookup_limit = int(
+    artist_lookup_limit * CONSIDER_WILDCARD_ARTIST_THRESHOLD)
+discover_related_artist_lookup_limit = int(
+    wildcard_lookup_limit * DISCOVER_RELATED_ARTIST_THRESHOLD)
 cut_off_artists = dict(itertools.islice(
-    my_playlist_artists_ordered.items(), artist_lookup_limit))
+    my_playlist_artists_ordered.items(), (artist_lookup_limit-wildcard_lookup_limit)))
+
+if(wildcard_lookup_limit != 0):
+    diffKeys = set(my_playlist_artists_ordered.keys()) - \
+        set(cut_off_artists.keys())
+    leftover_artists = dict()
+    for key in diffKeys:
+        leftover_artists[key] = my_playlist_artists_ordered.get(key)
+
+    wildcard_artist_ids = list(leftover_artists.keys())
+    top_artists_for_related = dict(itertools.islice(
+        my_playlist_artists_ordered.items(), discover_related_artist_lookup_limit))
+    top_artist_ids = list(top_artists_for_related.keys())
+    for i in range(wildcard_lookup_limit):
+        if(i > (wildcard_lookup_limit-discover_related_artist_lookup_limit)):
+            top_artist_id = random.choice(top_artist_ids)
+            results = spotify.artist_related_artists(top_artist_id)
+            if len(results['artists']) > 0:
+                related_artists = dict(
+                    map(lambda i: (i['id'], i), results['artists']))
+                if DISCOVER_RELATED_ARTIST_ONLY_POPULAR:
+                    related_artists_sorted = OrderedDict(
+                        sorted(related_artists.items(), key=lambda t: t[1]['popularity'], reverse=True))
+                    top_related_artists = dict(itertools.islice(
+                        related_artists_sorted.items(), int(len(related_artists_sorted)*DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD)))
+                    top_related_artist_ids = list(top_related_artists.keys())
+                    random_related_artist_id = random.choice(
+                        top_related_artist_ids)
+                    random_related_artist = top_related_artists[random_related_artist_id]
+                else:
+                    related_artist_ids = list(related_artists.keys())
+                    random_related_artist_id = random.choice(
+                        related_artist_ids)
+                    random_related_artist = related_artists[random_related_artist_id]
+            while any(x in list(random_related_artist.keys()) for x in list(cut_off_artists.keys())):
+                random_related_artist = random.choice(results['artists'])
+            if random_related_artist:
+                cut_off_artists[random_related_artist['id']
+                                ] = random_related_artist
+                cut_off_artists[random_related_artist['id']
+                                ]['count'] = 0
+            top_artist_ids.remove(top_artist_id)
+            continue
+        wildcard_artist_id = random.choice(wildcard_artist_ids)
+        cut_off_artists[wildcard_artist_id] = leftover_artists[wildcard_artist_id]
+        wildcard_artist_ids.remove(wildcard_artist_id)
 
 latest_stuff = []
 time_now = datetime.now()
