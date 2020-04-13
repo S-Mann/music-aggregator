@@ -6,6 +6,7 @@ from dateutil.parser import parse
 import json
 from jsmin import jsmin
 import random
+import math
 import spotipy
 
 env = Env()
@@ -60,10 +61,11 @@ for song in my_playlist_songs:
 my_playlist_artists_ordered = OrderedDict(
     sorted(my_playlist_artists.items(), key=lambda t: t[1]['count'], reverse=True))
 
-artist_lookup_limit = int(len(my_playlist_artists_ordered) * ARTIST_THRESHOLD)
-wildcard_lookup_limit = int(
+artist_lookup_limit = math.ceil(
+    len(my_playlist_artists_ordered) * ARTIST_THRESHOLD)
+wildcard_lookup_limit = math.ceil(
     artist_lookup_limit * CONSIDER_WILDCARD_ARTIST_THRESHOLD)
-discover_related_artist_lookup_limit = int(
+discover_related_artist_lookup_limit = math.ceil(
     wildcard_lookup_limit * DISCOVER_RELATED_ARTIST_THRESHOLD)
 cut_off_artists = dict(itertools.islice(
     my_playlist_artists_ordered.items(), (artist_lookup_limit-wildcard_lookup_limit)))
@@ -90,7 +92,7 @@ if(wildcard_lookup_limit != 0):
                     related_artists_sorted = OrderedDict(
                         sorted(related_artists.items(), key=lambda t: t[1]['popularity'], reverse=True))
                     top_related_artists = dict(itertools.islice(
-                        related_artists_sorted.items(), int(len(related_artists_sorted)*DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD)))
+                        related_artists_sorted.items(), math.ceil(len(related_artists_sorted)*DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD)))
                     top_related_artist_ids = list(top_related_artists.keys())
                     random_related_artist_id = random.choice(
                         top_related_artist_ids)
@@ -100,8 +102,10 @@ if(wildcard_lookup_limit != 0):
                     random_related_artist_id = random.choice(
                         related_artist_ids)
                     random_related_artist = related_artists[random_related_artist_id]
-            while any(x in list(random_related_artist.keys()) for x in list(cut_off_artists.keys())):
+            checked_artist_already_exist_counter = 0
+            while any(x in list(random_related_artist.keys()) for x in list(cut_off_artists.keys())) and checked_artist_already_exist_counter < 5:
                 random_related_artist = random.choice(results['artists'])
+                checked_artist_already_exist_counter += 1
             if random_related_artist:
                 cut_off_artists[random_related_artist['id']
                                 ] = random_related_artist
