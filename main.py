@@ -20,6 +20,21 @@ with open('config.jsonc') as js_file:
 configs = json.loads(minified)
 ARTIST_THRESHOLD = configs['ARTIST_THRESHOLD']
 PLAYLIST_URI = configs['PLAYLIST_URI']
+UPDATE_EXISTING_PLAYLIST = configs.get(
+    'UPDATE_EXISTING_PLAYLIST', None)
+if UPDATE_EXISTING_PLAYLIST:
+    UPDATE_EXISTING_PLAYLIST_URI = UPDATE_EXISTING_PLAYLIST['UPDATE_EXISTING_PLAYLIST_URI']
+    OUTPUT_PLAYLIST_NAME = UPDATE_EXISTING_PLAYLIST.get(
+        'UPDATE_EXISTING_PLAYLIST_NAME', None)
+    OUTPUT_PLAYLIST_IS_PUBLIC = UPDATE_EXISTING_PLAYLIST.get(
+        'UPDATE_EXISTING_PLAYLIST_IS_PUBLIC', None)
+    OUTPUT_PLAYLIST_DESCRIPTION = UPDATE_EXISTING_PLAYLIST.get(
+        'UPDATE_EXISTING_PLAYLIST_DESCRIPTION', None)
+else:
+    OUTPUT_PLAYLIST_NAME = configs['GENERATED_PLAYLIST_NAME']
+    OUTPUT_PLAYLIST_IS_PUBLIC = configs['GENERATED_PLAYLIST_IS_PUBLIC']
+    OUTPUT_PLAYLIST_DESCRIPTION = configs['GENERATED_PLAYLIST_DESCRIPTION']
+
 USERNAME = configs['USERNAME']
 DAYS_LIMIT = configs['DAYS_LIMIT']
 CONSIDER_WILDCARD_ARTIST_THRESHOLD = configs['CONSIDER_WILDCARD_ARTIST_THRESHOLD']
@@ -27,9 +42,6 @@ DISCOVER_RELATED_ARTIST_THRESHOLD = configs['DISCOVER_RELATED_ARTIST_THRESHOLD']
 DISCOVER_RELATED_ARTIST_ONLY_POPULAR = configs['DISCOVER_RELATED_ARTIST_ONLY_POPULAR']
 DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD = configs[
     'DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD']
-GENERATED_PLAYLIST_NAME = configs['GENERATED_PLAYLIST_NAME']
-GENERATED_PLAYLIST_IS_PUBLIC = configs['GENERATED_PLAYLIST_IS_PUBLIC']
-GENERATED_PLAYLIST_DESCRIPTION = configs['GENERATED_PLAYLIST_DESCRIPTION']
 
 
 LIMIT = 100
@@ -140,10 +152,19 @@ for artist_id, artist in cut_off_artists.items():
         track_results = spotify.album_tracks(album['uri'])
         for item in track_results['items']:
             latest_stuff.append(item)
-created_playlist = spotify.user_playlist_create(
-    user=USERNAME, name=GENERATED_PLAYLIST_NAME, public=GENERATED_PLAYLIST_IS_PUBLIC, description=GENERATED_PLAYLIST_DESCRIPTION)
+
+if UPDATE_EXISTING_PLAYLIST:
+    spotify.user_playlist_replace_tracks(
+        user=USERNAME, playlist_id=UPDATE_EXISTING_PLAYLIST_URI, tracks=[])
+    output_playlist = spotify.user_playlist(
+        user=USERNAME, playlist_id=UPDATE_EXISTING_PLAYLIST_URI)
+    spotify.playlist_change_details(playlist_id=output_playlist["id"], name=OUTPUT_PLAYLIST_NAME,
+                                    public=OUTPUT_PLAYLIST_IS_PUBLIC, description=OUTPUT_PLAYLIST_DESCRIPTION)
+else:
+    output_playlist = spotify.user_playlist_create(
+        user=USERNAME, name=OUTPUT_PLAYLIST_NAME, public=OUTPUT_PLAYLIST_IS_PUBLIC, description=OUTPUT_PLAYLIST_DESCRIPTION)
 spotify.user_playlist_follow_playlist(
-    playlist_owner_id=USERNAME, playlist_id=created_playlist['id'])
+    playlist_owner_id=USERNAME, playlist_id=output_playlist['id'])
 for i in range(0, len(latest_stuff), LIMIT):
-    spotify.user_playlist_add_tracks(user=USERNAME, playlist_id=created_playlist['id'], tracks=[
+    spotify.user_playlist_add_tracks(user=USERNAME, playlist_id=output_playlist['id'], tracks=[
         track['uri'] for track in latest_stuff[i:i+LIMIT]])

@@ -2,12 +2,18 @@
     "ARTIST_THRESHOLD": 0.3, //Percentage of your TOP (artists that showed up the most in the base playlist) artists to consider. 0.5 will only get latest songs of the TOP 50% of your most heard artists in the playlist.
     "PLAYLIST_URI": "spotify:playlist:playlist_id", //The playlist you are trying to build from
     "USERNAME": "username", //User's username
-    "DAYS_LIMIT": 31, //How latest you want the songs to be from
-    "CONSIDER_WILDCARD_ARTIST_THRESHOLD": 0.5, //How many artist from the playlist that aren't in the TOP to be considered
+    "DAYS_LIMIT": 90, //How latest you want the songs to be from
+    "CONSIDER_WILDCARD_ARTIST_THRESHOLD": 0.5, //How many artist from the playlist that aren't in the TOP to be considered, if ARTIST_THRESHOLD is 0.3 and CONSIDER_WILDCARD_ARTIST_THRESHOLD 0.5 then out of the non-considered artist (0.7 or 70%) artist  randomly 50% will be selected.
     "DISCOVER_RELATED_ARTIST_THRESHOLD": 0.5, //How many artist out of the wildcard should be related artist and probably not in your playlist at all
     "DISCOVER_RELATED_ARTIST_ONLY_POPULAR": true, //The related artist are choosen based on popularity
     "DISCOVER_RELATED_ARTIST_ONLY_POPULAR_THRESHOLD": 0.2, //The cut off for the popularity of top related artist. Keeping it 20% works perfect.
-    "GENERATED_PLAYLIST_NAME": "🌊 New Songs", //The generated playlist's name
+    "GENERATED_PLAYLIST_NAME": "🌊 fresh playlist", //The generated playlist's name
     "GENERATED_PLAYLIST_IS_PUBLIC": true, //Whether the generated playlist is public or private
-    "GENERATED_PLAYLIST_DESCRIPTION": "This playlist was created by github/S-Mann. It has latest songs from your top artists." //Description for the generated playlist
+    "GENERATED_PLAYLIST_DESCRIPTION": "This playlist was created by github/S-Mann. It has latest songs from your top artists.", //Description for the generated playlist
+    "UPDATE_EXISTING_PLAYLIST": {
+        "UPDATE_EXISTING_PLAYLIST_URI": "spotify:playlist:playlist_id", //If you already have a playlist that you want to completely replace with these songs.
+        "UPDATE_EXISTING_PLAYLIST_NAME": "🌊 Update existing playlist's name", //Update existing playlist's name
+        "UPDATE_EXISTING_PLAYLIST_IS_PUBLIC": true, //Update existing playlist to public
+        "UPDATE_EXISTING_PLAYLIST_DESCRIPTION": "This playlist was refreshed by github/S-Mann. It has latest songs from your top artists." //Description for the update to existing playlist
+    }
 }
